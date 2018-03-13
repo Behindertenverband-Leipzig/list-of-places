@@ -36,9 +36,15 @@ $db = new BVL\ListOfPlaces\Database();
  * list of places
  */
 $app->get('/', function (Request $request, Response $response, array $args) use ($twig, $config, $db) {
+
+});
+
+$app->map(['GET', 'POST'], '/places', function (Request $request, Response $response, array $args) use ($twig, $config, $db) {
+
     $response->getBody()->write($twig->render('index.html.twig', [
         'url' => $config['url'],
-        'places' => $db->getPlaces(),
+        'places' => $db->getPlaces($request->getParam('search')),
+        'search' => $request->getParam('search')
     ]));
 
     return $response;
@@ -47,7 +53,7 @@ $app->get('/', function (Request $request, Response $response, array $args) use 
 /*
  * place details
  */
-$app->get('/place/', function (Request $request, Response $response, array $args) {
+$app->get('/places/{id}', function (Request $request, Response $response, array $args) {
     $response->getBody()->write("Hello");
 
     return $response;

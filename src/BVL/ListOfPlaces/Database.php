@@ -82,7 +82,7 @@ class Database
     /**
      *
      */
-    public function getPlaces(int $offset = 0, int $limit = 10)
+    public function getPlaces(string $searchString = null, int $offset = 0, int $limit = 10)
     {
         // get all place URIs
         $entries = $this->store->query('
@@ -95,7 +95,15 @@ class Database
 
         $places = [];
         foreach ($entries as $entry) {
-            $places[] = $this->resourceGuyHelper->createInstanceByUri($entry['p']->getUri(), 2);
+
+            if (null !== $searchString) {
+                $place = $this->resourceGuyHelper->createInstanceByUri($entry['p']->getUri(), 2);
+                if (false !== strpos($place['dc11:title'], $searchString)) {
+                    $places[] = $place;
+                }
+            } elseif (null == $searchString) {
+                $places[] = $this->resourceGuyHelper->createInstanceByUri($entry['p']->getUri(), 2);
+            }
         }
 
         return $places;

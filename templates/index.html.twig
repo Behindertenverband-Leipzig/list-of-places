@@ -3,12 +3,22 @@
     <head>
         <meta charset="utf-8">
         <title></title>
-        <link rel="stylesheet" href="{{ url }}public/css/bootstrap.min.css">
+        <link rel="stylesheet" href="{{ url }}css/bootstrap.min.css">
     </head>
     <body>
         <div class="container">
             <h2>Gebäude</h2>
 
+            <br/>
+            <br/>
+
+            <form class="" action="{{ url }}places" method="post">
+                Gebäude nach Namen suchen:
+                <input class="form-control" type="text" name="search" value="{{ search }}" style="width: 400px;">
+                <button type="submit" class="btn btn-primary">Suchen</button>
+            </form>
+
+            <br/>
             <br/>
             <br/>
 
