@@ -1,0 +1,19 @@
+{
+    "require": {
+        "k00ni/knorke": ">=0.3",
+        "saft/saft-arc2": ">=0.14",
+        "saft/saft-store-http": ">=0.14",
+        "symfony/cache": "3.*",
+        "symfony/yaml": "3.*",
+        "slim/slim": "3.*",
+        "twig/twig": "2.*"
+    },
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "BVL\\ListOfPlaces\\": [
+                "src/BVL/ListOfPlaces/"
+            ]
+        }
+    }
+}

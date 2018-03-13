@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title></title>
+        <link rel="stylesheet" href="{{ url }}public/css/bootstrap.min.css">
+    </head>
+    <body>
+        <div class="container">
+            <h2>Gebäude</h2>
+
+            <br/>
+            <br/>
+
+            {% for place in places %}
+                <div style="margin-bottom: 70px;">
+                    <h5>{{ place['dc11:title'] }}</h5>
+
+                    <br/>
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Allgemeine Informationen</strong>
+                            <table class="table" style="width: 100%;">
+                                <tr>
+                                    <td>Adresse</td>
+                                    <td>
+                                        {{ place['p:location']['schema:streetAddress'] }}<br/>
+                                        {{ place['p:location']['schema:postalCode'] }}
+                                        {{ place['p:location']['schema:addressLocality'] }}
+                                        <br/>
+                                        <br/>
+                                        {% set lat = place['p:location']['geo2:lat'] %}
+                                        {% set long = place['p:location']['geo2:long'] %}
+                                        <a href="http://www.openstreetmap.org/?mlat={{ lat }}&mlon={{ long }}&zoom=18">
+                                            Zeige auf Karte</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Öffnungszeiten</td>
+                                    <td>{{ place['p:openingHours'] }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-6">
+                            <strong>Informationen zur Barrierefreiheit:</strong>
+                            <br/>
+                            <table class="table">
+                                <tr>
+                                    <td style="min-width: 300px;">Eingangsbereich rollstuhlgerecht:</td>
+                                    <td>{{ place['p:entrance']['pacc:suitableForWheelchairs'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Aufzug rollstuhlgerecht:</td>
+                                    <td>{{ place['p:elevator']['pacc:suitableForWheelchairs'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Toilette rollstuhlgerecht:</td>
+                                    <td>{{ place['p:toilet']['pacc:suitableForWheelchairs'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Toilette rollstuhlgerecht:</td>
+                                    <td>{{ place['p:toilet']['pacc:suitableForWheelchairs'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Hilfestellungen für Menschen mit Sehbehinderung:</td>
+                                    <td>
+                                        {{ place['pacc:supportForVisuallyImpairedAvailable'] }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Hilfestellungen für Menschen mit Hörbehinderung:</td>
+                                    <td>
+                                        {{ place['pacc:supportForHearingImpairedAvailable'] }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Allgemeine Hilfestellungen:</td>
+                                    <td>
+                                        {{ place['pacc:localSupport'] }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </body>
+</html>
