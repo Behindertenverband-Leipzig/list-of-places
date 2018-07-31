@@ -2,17 +2,13 @@
 
 namespace BVL\ListOfPlaces;
 
-use Knorke\Importer;
-use Knorke\ParserFactory;
-use Knorke\ResourceGuyHelper;
-use Saft\Addition\ARC2\Store\ARC2;
-use Saft\Addition\ARC2\Store\NativeARC2Importer;
+use Curl\Curl;
+use Saft\Addition\HttpStore\Store\HttpStore;
 use Saft\Rdf\CommonNamespaces;
 use Saft\Rdf\NodeFactoryImpl;
 use Saft\Rdf\RdfHelpers;
 use Saft\Rdf\StatementFactoryImpl;
 use Saft\Rdf\StatementIteratorFactoryImpl;
-use Saft\Sparql\Query\QueryFactoryImpl;
 use Saft\Sparql\Result\ResultFactoryImpl;
 use Symfony\Component\Cache\Simple\FilesystemCache;
 
@@ -32,112 +28,158 @@ class Database
         $this->commonNamespaces->add('p', 'https://github.com/AKSW/leds-asp-f-ontologies/raw/master/ontologies/place/ontology.ttl#');
         $this->commonNamespaces->add('dbp', 'http://dbpedia.org/ontology/');
         $this->commonNamespaces->add('geo2', 'http://www.w3.org/2003/01/geo/');
+        $this->commonNamespaces->add('wa', 'http://semweb.mmlab.be/ns/wa#');
 
         $this->rdfHelpers = new RdfHelpers();
-        $this->nodeFactory = new NodeFactoryImpl($this->rdfHelpers);
+        $this->nodeFactory = new NodeFactoryImpl();
         $this->statementFactory = new StatementFactoryImpl();
         $this->statementIteratorFactory = new StatementIteratorFactoryImpl();
-        $this->parserFactory = new ParserFactory(
-            $this->nodeFactory,
-            $this->statementFactory,
-            $this->statementIteratorFactory,
-            $this->rdfHelpers
-        );
 
-        $this->store = new ARC2(
+        /*
+         * this define call fixes the following errors:
+         *
+         * Notice: Use of undefined constant STDERR - assumed 'STDERR' in
+         * ../vendor/php-curl-class/php-curl-class/src/Curl/Curl.php on line 1184
+         *
+         * Warning: curl_setopt(): supplied argument is not a valid File-Handle resource in
+         * .../vendor/php-curl-class/php-curl-class/src/Curl/Curl.php on line 1000
+         */
+        define('STDERR', fopen('php://stderr', 'w'));
+        $this->curl = new Curl();
+
+        $this->store = new HttpStore(
             $this->nodeFactory,
             $this->statementFactory,
-            new QueryFactoryImpl($this->rdfHelpers),
             new ResultFactoryImpl(),
-            new StatementIteratorFactoryImpl(),
+            $this->statementIteratorFactory,
             $this->rdfHelpers,
-            $this->commonNamespaces,
             [
-                'username' => 'root',
-                'password' => 'Pass123',
-                'database' => 'places',
-                'host' => 'db'
-            ]
-        );
-
-        $this->importer = new NativeARC2Importer($this->store->getStore());
-
-        $this->graphUri = 'https://behindertenverband-leipzig.de/ns/places/';
-
-        $this->resourceGuyHelper = new ResourceGuyHelper(
-            $this->store,
-            [
-                $this->graphUri
+                'query-url' => 'https://opendata.leipzig.de/virt-sparql',
             ],
-            $this->statementFactory,
-            $this->nodeFactory,
-            $this->rdfHelpers,
-            $this->commonNamespaces
+            $this->curl
         );
 
-        // cache
+        $this->graphUri = 'https://opendata.leipzig.de/bvlplaces/';
+
+        /*
+         * cache
+         */
         $this->cache = new FilesystemCache();
+
+        // cache item is stored one day
+        $this->timeToLive = 60*60*24;
+    }
+
+    /**
+     * @param string $searchString
+     * @param string $offset
+     */
+    public function getPlaces(string $searchString = null, int $offset = 0, int $limit = 40): array
+    {
+        $key = \hash('sha256', $searchString . $offset . $limit);
+
+        if (!$this->cache->has($key)) {
+            // get all place URIs
+            $query = '
+                PREFIX dc: <'.$this->commonNamespaces->getUri('dc11').'>
+                PREFIX p: <'.$this->commonNamespaces->getUri('p').'>
+                PREFIX rdf: <'.$this->commonNamespaces->getUri('rdf').'>
+                SELECT ?s ?title
+                  FROM <'.$this->graphUri.'>
+                WHERE { ?s rdf:type p:Place';
+
+            if (!empty($searchString)) {
+                $query .= ' ; dc:title ?title
+                    FILTER(REGEX(?title, "'.$searchString.'", "i")) }';
+            } else {
+                $query .= '. }';
+            }
+
+            $query .= ' OFFSET '.$offset.' LIMIT '.$limit;
+
+            $entries = $this->store->query($query);
+
+            $places = [];
+            foreach ($entries as $entry) {
+                $places[] = $this->getPlace($entry['s']->getUri());
+            }
+
+            // sort by title
+            \uasort($places, function($a, $b) {
+                return 0 < \strcasecmp($a['dc11:title'], $b['dc11:title']);
+            });
+
+            if (0 < \count($places)) {
+                $this->cache->set($key, $places, $this->timeToLive);
+            }
+        }
+
+        return $this->cache->get($key);
+    }
+
+    /**
+     * @param string $placeURI
+     */
+    public function getPlace(string $placeURI): array
+    {
+        $key = hash('sha256', $placeURI);
+
+        if (!$this->cache->has($key)) {
+            // properties of the current place entry
+            $properties = $this->store->query('
+                PREFIX p: <'.$this->commonNamespaces->getUri('p').'>
+                PREFIX rdf: <'.$this->commonNamespaces->getUri('rdf').'>
+                SELECT ?p ?o
+                WHERE { <'.$placeURI.'> ?p ?o. }
+            ')->toArray();
+
+            $place = [];
+            foreach ($properties as $prop) {
+                // type cast string to int, if available
+                if (\ctype_digit($prop['o'])) {
+                    $value = (float) $prop['o'];
+                // type cast string to bool, if available
+                } elseif ('true' === $prop['o'] || 'false' === $prop['o']) {
+                    $value = 'true' == $prop['o'];
+                } else {
+                    $value = $prop['o'];
+                }
+
+                $place[$this->commonNamespaces->shortenUri($prop['p'])] = $value;
+            }
+
+            $this->cache->set($key, $place, $this->timeToLive);
+        }
+
+        return $this->cache->get($key);
     }
 
     /**
      *
      */
-    public function getPlaces(string $searchString = null, int $offset = 0, int $limit = 10)
+    public function getPlaceByID(string $id): array
     {
-        // get all place URIs
-        $entries = $this->store->query('
-            PREFIX p: <'.$this->commonNamespaces->getUri('p').'>
-            PREFIX rdf: <'.$this->commonNamespaces->getUri('rdf').'>
-            SELECT ?p
-            WHERE { ?p rdf:type p:Place }
-            OFFSET '. $offset .' LIMIT '.$limit.'
-        ');
+        $key = hash('sha256', $id);
 
-        $places = [];
-        foreach ($entries as $entry) {
-
-            if (null !== $searchString) {
-                $place = $this->resourceGuyHelper->createInstanceByUri($entry['p']->getUri(), 2);
-                if (false !== strpos($place['dc11:title'], $searchString)) {
-                    $places[] = $place;
+        if (!$this->cache->has($key)) {
+            $places = $this->store->query('
+                PREFIX dc: <'.$this->commonNamespaces->getUri('dc').'>
+                PREFIX p: <'.$this->commonNamespaces->getUri('p').'>
+                PREFIX rdf: <'.$this->commonNamespaces->getUri('rdf').'>
+                SELECT ?s
+                WHERE {
+                    ?s rdf:type p:Place ;
+                       dc:identifier "'.$id.'" .
                 }
-            } elseif (null == $searchString) {
-                $places[] = $this->resourceGuyHelper->createInstanceByUri($entry['p']->getUri(), 2);
+            ');
+
+            $place = $this->getPlace($places->toArray()[0]['s']);
+
+            if (0 < \count($place)) {
+                $this->cache->set($key, $place, $this->timeToLive);
             }
         }
 
-        return $places;
-    }
-
-    public function importFile(string $filepath)
-    {
-        $this->store->emptyAllTables();
-        $file = new \SplFileObject($filepath);
-
-        $batch = 200;
-        $counter = 0;
-        $chunk = '';
-
-        // Loop until we reach the end of the file.
-        while (!$file->eof()) {
-            $chunk .= utf8_decode($file->fgets());
-
-            if ($counter > $batch) {
-                $this->store->query('INSERT INTO <'. $this->graphUri .'> {'. $chunk .'}');
-
-                $chunk = '';
-                $counter = 0;
-            }
-
-            ++$counter;
-        }
-
-        // if there is something not inserted yet
-        if (0 < $counter) {
-            $this->store->query('INSERT INTO <'. $this->graphUri .'> {'. $chunk .'}');
-        }
-
-        // Unset the file to call __destruct(), closing the file handle.
-        $file = null;
+        return $this->cache->get($key);
     }
 }

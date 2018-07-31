@@ -7,14 +7,19 @@
     </head>
     <body>
         <div class="container">
+            <br/>
             <h2>Gebäude</h2>
 
             <br/>
             <br/>
 
-            <form class="" action="{{ url }}places" method="post">
-                Gebäude nach Namen suchen:
-                <input class="form-control" type="text" name="search" value="{{ search }}" style="width: 400px;">
+            <form action="{{ url }}places" method="get">
+                <strong>Gebäude nach Namen suchen:</strong>
+                <br/>
+                <br/>
+                <input class="form-control" type="text" name="search" value="{{ search }}"
+                    style="min-width: 100%; max-width: 100px;">
+                <br/>
                 <button type="submit" class="btn btn-primary">Suchen</button>
             </form>
 
@@ -22,78 +27,121 @@
             <br/>
             <br/>
 
-            {% for place in places %}
-                <div style="margin-bottom: 70px;">
-                    <h5>{{ place['dc11:title'] }}</h5>
+            {% if 0 < places|length %}
+                <h3>Gefundene Gebäude und Plätze</h3>
 
+                {% for place in places %}
+                    <hr>
                     <br/>
-                    <div class="row">
-                        <div class="col-6">
-                            <strong>Allgemeine Informationen</strong>
-                            <table class="table" style="width: 100%;">
-                                <tr>
-                                    <td>Adresse</td>
-                                    <td>
-                                        {{ place['p:location']['schema:streetAddress'] }}<br/>
-                                        {{ place['p:location']['schema:postalCode'] }}
-                                        {{ place['p:location']['schema:addressLocality'] }}
-                                        <br/>
-                                        <br/>
-                                        {% set lat = place['p:location']['geo2:lat'] %}
-                                        {% set long = place['p:location']['geo2:long'] %}
-                                        <a href="http://www.openstreetmap.org/?mlat={{ lat }}&mlon={{ long }}&zoom=18">
-                                            Zeige auf Karte</a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Öffnungszeiten</td>
-                                    <td>{{ place['p:openingHours'] }}</td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="col-6">
-                            <strong>Informationen zur Barrierefreiheit:</strong>
-                            <br/>
-                            <table class="table">
-                                <tr>
-                                    <td style="min-width: 300px;">Eingangsbereich rollstuhlgerecht:</td>
-                                    <td>{{ place['p:entrance']['pacc:suitableForWheelchairs'] }}</td>
-                                </tr>
-                                <tr>
-                                    <td>Aufzug rollstuhlgerecht:</td>
-                                    <td>{{ place['p:elevator']['pacc:suitableForWheelchairs'] }}</td>
-                                </tr>
-                                <tr>
-                                    <td>Toilette rollstuhlgerecht:</td>
-                                    <td>{{ place['p:toilet']['pacc:suitableForWheelchairs'] }}</td>
-                                </tr>
-                                <tr>
-                                    <td>Toilette rollstuhlgerecht:</td>
-                                    <td>{{ place['p:toilet']['pacc:suitableForWheelchairs'] }}</td>
-                                </tr>
-                                <tr>
-                                    <td>Hilfestellungen für Menschen mit Sehbehinderung:</td>
-                                    <td>
-                                        {{ place['pacc:supportForVisuallyImpairedAvailable'] }}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Hilfestellungen für Menschen mit Hörbehinderung:</td>
-                                    <td>
-                                        {{ place['pacc:supportForHearingImpairedAvailable'] }}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Allgemeine Hilfestellungen:</td>
-                                    <td>
-                                        {{ place['pacc:localSupport'] }}
-                                    </td>
-                                </tr>
-                            </table>
+                    <br/>
+                    <div style="margin-bottom: 50px;">
+                        <h4><a href="{{ url }}place/{{ place['dc:identifier'] }}">{{ place['dc11:title'] }}</a></h4>
+
+                        <br/>
+                        <div class="row">
+                            <div class="col-sm-12 col-md-6 col-lg-6">
+                                <strong>Allgemeine Informationen</strong>
+                                <table class="table" style="width: 100%;">
+                                    <tr>
+                                        <td>Adresse</td>
+                                        <td>
+                                            {{ place['schema:streetAddress'] }}<br/>
+                                            {{ place['schema:postalCode'] }}
+                                            {{ place['schema:addressLocality'] }}
+                                            <br/>
+                                            <br/>
+                                            {% set lat = place['geo:lat'] %}
+                                            {% set long = place['geo:long'] %}
+                                            <a href="http://www.openstreetmap.org/?mlat={{ lat }}&mlon={{ long }}&zoom=18">
+                                                Zeige auf Karte</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Öffnungszeiten</td>
+                                        <td>
+                                            {% if 1 < place['p:openingHours']|length %}
+                                                {{ place['p:openingHours'] }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-sm-12 col-md-6 col-lg-6">
+                                <strong>Informationen zur Barrierefreiheit:</strong>
+                                <br/>
+                                <table class="table" style="width: 100%;">
+                                    <tr>
+                                        <td style="min-width: 300px;">Eingangsbereich rollstuhlgerecht:</td>
+                                        <td>
+                                            {% if 'partly' == place['pacc:entranceSuitableForWheelchairs'] %}
+                                                teilweise
+                                            {% elseif 'fully' == place['pacc:entranceSuitableForWheelchairs'] %}
+                                                vollständig
+                                            {% else %}
+                                                nein
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Aufzug rollstuhlgerecht:</td>
+                                        <td>
+                                            {% if 'partly' == place['pacc:elevatorSuitableForWheelchairs'] %}
+                                                teilweise
+                                            {% elseif 'fully' == place['pacc:elevatorSuitableForWheelchairs'] %}
+                                                vollständig
+                                            {% else %}
+                                                nein
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Toilette rollstuhlgerecht:</td>
+                                        <td>
+                                            {% if 'partly' == place['pacc:toiletSuitableForWheelchairs'] %}
+                                                teilweise
+                                            {% elseif 'fully' == place['pacc:toiletSuitableForWheelchairs'] %}
+                                                vollständig
+                                            {% else %}
+                                                nein
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Hilfestellungen für Menschen mit Sehbehinderung:</td>
+                                        <td>
+                                            {% if place['pacc:supportForVisuallyImpairedAvailable'] %}
+                                                ja
+                                            {% else %}
+                                                nein
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Hilfestellungen für Menschen mit Hörbehinderung:</td>
+                                        <td>
+                                            {% if place['pacc:supportForHearingImpairedAvailable'] %}
+                                                ja
+                                            {% else %}
+                                                nein
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% if 0 < place['pacc:localSupport']|length %}
+                                        <tr>
+                                            <td>Allgemeine Hilfestellungen:</td>
+                                            <td>
+                                                {{ place['pacc:localSupport'] }}
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </table>
+                            </div>
                         </div>
                     </div>
-                </div>
-            {% endfor %}
+                {% endfor %}
+            {% endif %}
         </div>
     </body>
 </html>

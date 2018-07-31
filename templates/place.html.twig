@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>{{ place['dc11:title'] }}</title>
+        <link rel="stylesheet" href="{{ url }}css/bootstrap.min.css">
+    </head>
+    <body>
+        <div class="container">
+            <br/>
+            <div style="text-align: center;">
+                <h2>{{ place['dc11:title'] }}</h2>
+
+                {{ place['schema:streetAddress'] }}, {{ place['schema:postalCode'] }} {{ place['schema:addressLocality'] }}
+
+                &nbsp;
+                &nbsp;
+                &nbsp;
+                {% set address = place['schema:streetAddress'] ~' '~ place['schema:postalCode']~' '~place['schema:addressLocality'] %}
+                <a href="https://www.openstreetmap.org/search?query={{ address }}">Auf Karte anzeigen</a>
+            </div>
+
+            <div class="row" style="margin-top: 40px;">
+                <div class="col-6">
+                    {% if 0 < place['p:openingHours']|length %}
+                        <strong>Öffnungszeiten:</strong><br/>
+                        {{ place['p:openingHours'] }}
+                    {% endif %}
+
+                    {% if 0 < place['pacc:localSupport']|length %}
+                        <br/>
+                        <br/>
+                        <strong>Hilfestellungen vor Ort:</strong><br/>
+                        {{ place['pacc:localSupport'] }}
+                    {% endif %}
+                </div>
+                <div class="col-6">
+                    {% if place['acc:supportForHearingImpairedAvailable'] %}
+                        <div class="row">
+                            <div class="col-2">
+                                <img src="{{ url }}images/Hilfen-fuer-Menschen-mit-Hoerschaedigung.svg"
+                                    alt="Hilfen für Menschen mit Hörschädigung vorhanden"
+                                    style="width: 50px;">
+                            </div>
+                            <div class="col-10" style="padding-top: 10px;">
+                                Hilfen für Menschen mit Hörschädigung vorhanden
+                            </div>
+                        </div>
+                        <br/>
+                    {% endif %}
+
+                    {% if place['acc:supportForVisuallyImpairedAvailable'] %}
+                        <div class="row">
+                            <div class="col-2">
+                                <img src="{{ url }}images/Hilfen-fuer-Menschen-mit-Sehbehinderung.svg"
+                                    alt="Hilfen für Menschen mit Sehschädigung vorhanden"
+                                    style="width: 50px;">
+                            </div>
+                            <div class="col-10" style="padding-top: 10px;">
+                                Hilfen für Menschen mit Sehschädigung vorhanden
+                            </div>
+                        </div>
+                        <br/>
+                    {% endif %}
+
+                    {% if 0 < place['pacc:numberOfSlotsDisabledParkingLotInFrontOfPlace']
+                        or 0 < place['pacc:numberOfSlotsDisabledParkingLotOnSite'] %}
+                        <div class="row">
+                            <div class="col-2">
+                                <img src="{{ url }}images/Behindertenparkplatz-vorhanden.svg"
+                                    alt="Behindertenparkplätze vorhanden"
+                                    style="width: 50px;">
+                            </div>
+                            <div class="col-10" style="padding-top: 10px;">
+                                Behindertenparkplätze vor Einrichtung vorhanden
+                            </div>
+                        </div>
+                        <br/>
+                    {% endif %}
+
+                    {% if place['p:parkingLotOnSiteAvailable'] %}
+                        <div class="row">
+                            <div class="col-2">
+                                <img src="{{ url }}images/Parkplatz-vorhanden.svg"
+                                    alt="Hauseigener Parkplatz vorhanden"
+                                    style="width: 50px;">
+                            </div>
+                            <div class="col-10">
+                                Hauseigener Parkplatz vorhanden
+
+                                {% if 0 < place['p:locationParkingLotOnSite']|length %}
+                                    <br/>
+                                    <strong>Ort:</strong> {{ place['p:locationParkingLotOnSite'] }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <br/>
+            <br/>
+            <br/>
+
+            {#
+                entrance
+             #}
+            <div>
+                <div class="text-center">
+                    {% if 'partly' == place['pacc:entranceSuitableForWheelchairs'] %}
+                        <h3>Eingangsbereich ist teilweise rollstuhlgerecht</h3>
+                        <img src="{{ url }}images/teilweise-rollstuhlgerecht.svg"
+                             alt="Eingang ist eingeschränkt rollstuhlgerecht"
+                             style="width: 50px;">
+                    {% elseif 'fully' == place['pacc:entranceSuitableForWheelchairs'] %}
+                        <h3>Eingangsbereich ist vollständig rollstuhlgerecht</h3>
+                        <img src="{{ url }}images/vollstaendig-rollstuhlgerecht.svg"
+                             alt="Eingang ist vollständig rollstuhlgerecht"
+                             style="width: 50px;">
+                    {% endif %}
+                </div>
+
+                <br/>
+                <br/>
+                <br/>
+
+                <div class="row">
+                    <div class="col-4">
+                        <strong>Stufen und Rampe</strong>
+
+                        <br/>
+                        <br/>
+
+                        <table class="table">
+                            <tr>
+                                <td>Stufen bis Eingangsbereich vorhanden</td>
+                                <td>{% if place['pacc:numberOfStepsTillEntrance'] %}ja{% else %}nein{% endif %}</td>
+                            </tr>
+                            {% if 0 < place['p:heightOfAStepTillEntrance'] %}
+                                <tr>
+                                    <td>Höhe einer Stufe</td>
+                                    <td><nobr>{{ place['p:heightOfAStepTillEntrance'] }} cm</nobr></td>
+                                </tr>
+                                <tr>
+                                    <td>Farbliche Markierung der ersten und letzten Stufe vorhanden</td>
+                                    <td>
+                                        {% if place['p:stepsTillEntranceFirstLastColorized'] %}
+                                            Ja
+                                        {% else %}
+                                            Nein
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                            {% if place['p:entranceContinuousHandrailLeftAvailable'] %}
+                                <tr>
+                                    <td>Handlauf bis Eingang links vorhanden</td>
+                                    <td>
+                                        {% if place['p:entranceContinuousHandrailLeftAvailable'] %}
+                                            Ja
+                                        {% else %}
+                                            Nein
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                            {% if place['p:entranceContinuousHandrailRightAvailable'] %}
+                                <tr>
+                                    <td>Handlauf bis Eingang rechts vorhanden</td>
+                                    <td>
+                                        {% if place['p:entranceContinuousHandrailRightAvailable'] %}
+                                            Ja
+                                        {% else %}
+                                            Nein
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                            {% if place['p:entranceRampAvailable'] %}
+                                <tr>
+                                    <td>Rampe vor Eingang vorhanden</td>
+                                    <td>
+                                        Ja
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Breite der Rampe</td>
+                                    <td>
+                                        <nobr>{{ place['p:entranceRampWidthCm'] }} cm</nobr>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Länge der Rampe</td>
+                                    <td>
+                                        <nobr>{{ place['p:entranceRampLengthCm'] }} cm</nobr>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Höhe der Rampe</td>
+                                    <td>
+                                        <nobr>{{ place['p:entranceRampHeightCm'] }} cm</nobr>
+                                    </td>
+                                </tr>
+                                {% if place['p:entranceRampContinuousHandrailLeftAvailable'] %}
+                                    <tr>
+                                        <td>Durchgehender Handlauf links vorhanden</td>
+                                        <td>
+                                            Ja
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                                {% if place['p:entranceRampContinuousHandrailRightAvailable'] %}
+                                    <tr>
+                                        <td>Durchgehender Handlauf rechts vorhanden</td>
+                                        <td>
+                                            Ja
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                                {% if place['p:entranceRampStartEndColorized'] %}
+                                    <tr>
+                                        <td>Farbliche Markierung am Anfang und Ende der Rampe</td>
+                                        <td>
+                                            Ja
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% endif %}
+                        </table>
+
+                    </div>
+                    <div class="col-4">
+                         <strong>Klingel</strong>
+                         <br/>
+                         <br/>
+                         <table class="table">
+                            <tr>
+                                <td>Klingel vorhanden</td>
+                                <td>{% if place['p:entranceBellAvailable'] %}ja{% else %}nein{% endif %}</td>
+                            </tr>
+                            {% if 0 < place['p:entranceLocationOfTheBell']|length %}
+                                <tr>
+                                    <td>Ort der Klingel</td>
+                                    <td>{{ place['p:entranceLocationOfTheBell'] }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if 0 < place['p:entranceBellWithIntercomAvailable']|length %}
+                                <tr>
+                                    <td>Klingel mit Wechselsprechanlage vorhanden</td>
+                                    <td>
+                                        {% if place['p:entranceBellWithIntercomAvailable'] %}
+                                            Ja
+                                        {% else %}
+                                            Nein
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                            {% if 0 < place['p:entranceBellHeightOfHeighestButtonCm'] %}
+                                <tr>
+                                    <td>Höhe oberster Bedienknopf der Klingel</td>
+                                    <td>
+                                        <nobr>{{ place['p:entranceBellHeightOfHeighestButtonCm'] }} cm</nobr>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                         </table>
+                     </div>
+                     <div class="col-4">
+                         <strong>Eingangstür</strong>
+                         <br/>
+                         <br/>
+
+                         <table class="table">
+                             <tr>
+                                 <td>Türbreite</td>
+                                 <td class="text-right">
+                                     <nobr>{{ place['wa:entranceDoorWidth'] }} cm</nobr></td>
+                             </tr>
+                             {% if 0 < place['p:entranceDoorType']|length %}
+                                <tr>
+                                     <td>Türart</td>
+                                     <td>
+                                         {% set type = 'https://github.com/AKSW/leds-asp-f-ontologies/raw/master/ontologies/building/ontology.ttl#AutomaticDoor' %}
+                                         {% if type == place['p:entranceDoorType'] %}
+                                             Automatische Tür
+                                         {% endif %}
+
+                                         {% set type = 'https://github.com/AKSW/leds-asp-f-ontologies/raw/master/ontologies/building/ontology.ttl#SemiautomaticDoor' %}
+                                         {% if type == place['p:entranceDoorType'] %}
+                                             Teil-Automatische Tür
+                                         {% endif %}
+
+                                         {% set type = 'https://github.com/AKSW/leds-asp-f-ontologies/raw/master/ontologies/building/ontology.ttl#CirclingLeafDoor' %}
+                                         {% if type == place['p:entranceDoorType'] %}
+                                             Drehtür
+                                         {% endif %}
+
+                                         {% set type = 'https://github.com/AKSW/leds-asp-f-ontologies/raw/master/ontologies/building/ontology.ttl#CirclingLeafDoor' %}
+                                         {% if type == place['p:entranceDoorType'] %}
+                                             Drehtür
+                                         {% endif %}
+
+                                         {% set type = 'https://github.com/AKSW/leds-asp-f-ontologies/raw/master/ontologies/building/ontology.ttl#SlideDoor' %}
+                                         {% if type == place['p:entranceDoorType'] %}
+                                             Schiebetür
+                                         {% endif %}
+
+                                         {% set type = 'https://github.com/AKSW/leds-asp-f-ontologies/raw/master/ontologies/building/ontology.ttl#SwingDoor' %}
+                                         {% if type == place['p:entranceDoorType'] %}
+                                             Schwingtür
+                                         {% endif %}
+
+                                         {% set type = 'https://github.com/AKSW/leds-asp-f-ontologies/raw/master/ontologies/building/ontology.ttl#SomeDoor' %}
+                                         {% if type == place['p:entranceDoorType'] %}
+                                             Keine Angabe
+                                         {% endif %}
+                                     </td>
+                                 </tr>
+                             {% endif %}
+                             {% if place['pacc:altEntranceForWheelchairUserExisting'] %}
+                                 <tr>
+                                     <td>Alternativer Eingang für Rollstuhlfahrer</td>
+                                     <td>
+                                         Ja
+
+                                         {% if 0 < place['pacc:locationAltEntranceForWheelchairUser']|length %}
+                                             <br/>
+                                             <br/>
+                                             <strong>Ort:</strong> {{ place['pacc:locationAltEntranceForWheelchairUser'] }}
+                                         {% endif %}
+                                     </td>
+                                 </tr>
+                             {% endif %}
+                             {% if place['pacc:entranceRampAvailable'] %}
+                                 <tr>
+                                     <td>Alternativer Eingang für Rollstuhlfahrer</td>
+                                     <td>
+                                         Ja
+
+                                         {% if 0 < place['pacc:locationAltEntranceForWheelchairUser']|length %}
+                                             <br/>
+                                             <br/>
+                                             <strong>Ort:</strong> {{ place['pacc:locationAltEntranceForWheelchairUser'] }}
+                                         {% endif %}
+                                     </td>
+                                 </tr>
+                             {% endif %}
+                         </table>
+                     </div>
+                 </div>
+             </div>
+
+            {#
+                elevator
+             #}
+            {% if place['pacc:elevatorAvailable']
+                or 'fully' == place['pacc:elevatorSuitableForWheelchairs']
+                or 'partly' == place['pacc:elevatorSuitableForWheelchairs'] %}
+                <br/>
+                <br/>
+                <br/>
+
+                <div>
+                    <div class="text-center">
+                        {% if 'partly' == place['pacc:elevatorSuitableForWheelchairs'] %}
+                            <h3 id="elevator">Aufzug ist teilweise rollstuhlgerecht</h3>
+                            <img src="{{ url }}images/Aufzug-vorhanden-eingeschraenkt-rollstuhlgerecht.svg"
+                                alt="Aufzug ist eingeschränkt rollstuhlgerecht"
+                                style="width: 50px;">
+                        {% elseif 'fully' == place['pacc:elevatorSuitableForWheelchairs'] %}
+                            <h3 id="elevator">Aufzug ist vollständig rollstuhlgerecht</h3>
+                            <img src="{{ url }}images/Aufzug-vorhanden-rollstuhlgerecht.svg"
+                                alt="Aufzug ist vollständig rollstuhlgerecht"
+                                style="width: 50px;">
+                        {% elseif place['pacc:elevatorAvailable'] %}
+                            <h3 id="elevator">Aufzug ist vorhanden</h3>
+                            <img src="{{ url }}images/Aufzug-vorhanden.svg"
+                                alt="Aufzug ist vorhanden"
+                                style="width: 50px;">
+                        {% endif %}
+                    </div>
+
+                    <br/>
+                    <br/>
+                    <br/>
+
+                    <div class="row">
+                        <div class="col-4 text-center">
+                            <strong>Bis zum Aufzug</strong>
+                            <br/>
+                            <br/>
+
+                            <table class="table">
+                                <tr>
+                                    <td>Stufen bis Aufzug in der Einrichtung vorhanden</td>
+                                    <td>{% if place['pacc:stepsTillElevatorInPlaceAvailable'] %}ja{% else %}nein{% endif %}</td>
+                                </tr>
+                                {% if 0 < place['pacc:numberOfStepsTillElevator'] %}
+                                    <tr>
+                                        <td>Anzahl der Stufen bis Aufzug in der Einrichtung</td>
+                                        <td>{{ place['pacc:numberOfStepsTillElevator'] }}</td>
+                                    </tr>
+                                {% endif %}
+                                {% if 0 < place['p:locationOfElevatorMaintainer'] %}
+                                    <tr>
+                                        <td>Aufenthaltsort des Aufzugsberechtigten</td>
+                                        <td>{{ place['pacc:locationOfElevatorMaintainer'] }}</td>
+                                    </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        <div class="col-4">
+                            <strong>Vor dem Aufzug</strong>
+                            <br/>
+                            <br/>
+
+                            <table class="table">
+                                <tr>
+                                    <td>Höhe des obersten Bedienknopfes außerhalb</td>
+                                    <td class="text-right">
+                                        <nobr>{{ place['p:elevatorOutsideDistanceFromGroundHeighestButtonCm'] }} cm</nobr></td>
+                                </tr>
+                                {% if 0 < place['pacc:elevatorTurningCircleExit']|length %}
+                                    <tr>
+                                        <td>Wendekreis bei Ausstieg</td>
+                                        <td class="text-right"><nobr>{{ place['pacc:elevatorTurningCircleExit'] }}</nobr></td>
+                                    </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        <div class="col-4">
+                            <strong>Im Aufzug</strong>
+                            <br/>
+                            <br/>
+
+                            <table class="table">
+                                <tr>
+                                    <td>Türbreite Kabine</td>
+                                    <td class="text-right">
+                                        <nobr>{{ place['wa:elevatorDoorWidth'] }} cm</nobr></td>
+                                </tr>
+                                <tr>
+                                    <td>Breite der Innenkabine</td>
+                                    <td class="text-right"><nobr>{{ place['wa:elevatorSpaceWidth'] }} cm</nobr></td>
+                                </tr>
+                                <tr>
+                                    <td>Tiefe der Innenkabine</td>
+                                    <td class="text-right"><nobr>{{ place['wa:elevatorSpaceDepth'] }} cm</nobr></td>
+                                </tr>
+                                <tr>
+                                    <td>Höhe des obersten Bedienknopfes in Innenkabine</td>
+                                    <td class="text-right">
+                                        <nobr>{{ place['p:elevatorCabineDistanceFromGroundHeighestButtonCm'] }} cm</nobr></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <br/>
+            <br/>
+
+            {#
+                toilet
+             #}
+             <div>
+                 <div class="text-center">
+                     {% if 'partly' == place['pacc:toiletSuitableForWheelchairs'] %}
+                         <h3 id="elevator">Toilette ist teilweise rollstuhlgerecht</h3>
+                         <img src="{{ url }}images/Toilette-teilweise-rollstuhlgerecht.svg"
+                             alt="Toilette ist eingeschränkt rollstuhlgerecht"
+                             style="width: 50px;">
+                     {% elseif 'fully' == place['pacc:toiletSuitableForWheelchairs'] %}
+                         <h3 id="elevator">Toilette ist vollständig rollstuhlgerecht</h3>
+                         <img src="{{ url }}images/Toilette-rollstuhlgerecht.svg"
+                             alt="Toilette ist vollständig rollstuhlgerecht"
+                             style="width: 50px;">
+                     {% endif %}
+                 </div>
+
+                 <br/>
+                 <br/>
+                 <br/>
+
+                 <div class="row">
+                     <div class="col-4 text-center">
+                         <strong>Bis zur Toilette</strong>
+                         <br/>
+                         <br/>
+
+                         <table class="table">
+                             {% if place['p:stepsTillToiletInPlaceAvailable'] %}
+                                 <tr>
+                                    <td>Stufen bis zur Toilette vorhanden</td>
+                                    <td>
+                                        Ja
+
+                                        {% if place['p:numberOfStepsTillToiletInPlace'] %}
+                                            <br/>
+                                            <br/>
+                                            {{ place['p:numberOfStepsTillToiletInPlace'] }} Stufen
+                                        {% endif %}
+                                    </td>
+                                 </tr>
+                                 {% if 0 < place['p:stepsHeightTillToiletInPlace'] %}
+                                     <tr>
+                                        <td>Höhe einer Stufe bis zur Toilette</td>
+                                        <td>
+                                            <nobr>{{ place['p:stepsHeightTillToiletInPlace'] }} cm</nobr>
+                                        </td>
+                                     </tr>
+                                 {% endif %}
+                                 {% if place['p:stepsTillToiletContinuousHandrailLeftAvailable'] %}
+                                     <tr>
+                                        <td>Handlauf links bei Stufen bis zur Toilette</td>
+                                        <td>
+                                            Ja
+                                        </td>
+                                     </tr>
+                                 {% endif %}
+                                 {% if place['p:stepsTillToiletContinuousHandrailRightAvailable'] %}
+                                     <tr>
+                                        <td>Handlauf rechts bei Stufen bis zur Toilette</td>
+                                        <td>
+                                            Ja
+                                        </td>
+                                     </tr>
+                                 {% endif %}
+                             {% else %}
+                                 <tr>
+                                    <td>Stufen bis zur Toilette vorhanden</td>
+                                    <td>
+                                        Nein
+                                    </td>
+                                 </tr>
+                             {% endif %}
+                         </table>
+                     </div>
+                     <div class="col-4">
+                         <strong>Toilette</strong>
+                         <br/>
+                         <br/>
+
+                         <table class="table">
+                             <tr>
+                                <td>Toilette mit Piktogramm als Behindertentoilette gekennzeichnet</td>
+                                <td>
+                                    {% if place['pacc:markedWithPictogramAsDisabledToilet'] %}
+                                        Ja
+                                    {% else %}
+                                        Nein
+                                    {% endif %}
+                                </td>
+                             </tr>
+                             <tr>
+                                <td>Türbreite der Toilettenkabine</td>
+                                <td>
+                                    <nobr>{{ place['wa:toiletDoorWidth'] }} cm</nobr>
+                                </td>
+                             </tr>
+                             {% if place['p:toiletDoorUnlockableFromOutside'] %}
+                                 <tr>
+                                    <td>Toilettentür von außen entriegelbar</td>
+                                    <td>
+                                        Ja
+                                    </td>
+                                 </tr>
+                             {% endif %}
+                             <tr>
+                                <td>Stützgriff neben WC vorhanden</td>
+                                <td>
+                                    {% if place['p:toiletSupportHandleAvailable'] %}
+                                        Ja
+                                    {% else %}
+                                        Nein
+                                    {% endif %}
+                                </td>
+                             </tr>
+                             <tr>
+                                <td>Stützgriff links vom WC klappbar</td>
+                                <td>
+                                    {% if place['p:toiletLeftSupportHandleIsFoldable'] %}
+                                        Ja
+                                    {% else %}
+                                        Nein
+                                    {% endif %}
+                                </td>
+                             </tr>
+                             <tr>
+                                <td>Stützgriff rechts vom WC klappbar</td>
+                                <td>
+                                    {% if place['p:toiletRightSupportHandleIsFoldable'] %}
+                                        Ja
+                                    {% else %}
+                                        Nein
+                                    {% endif %}
+                                </td>
+                             </tr>
+                             <tr>
+                                <td>Aktivierung der Amatur am Waschbecken</td>
+                                <td>
+                                    <nobr>
+                                        {% set type = 'https://github.com/AKSW/leds-asp-f-ontologies/raw/master/ontologies/building/ontology.ttl#Phototube' %}
+                                        {% if type == place['p:toiletVanityBasinFittingActivation'] %}
+                                            per Fotozelle
+                                        {% else %}
+                                            per Hebelarm
+                                        {% endif %}
+                                    </nobr>
+                                </td>
+                             </tr>
+                         </table>
+                     </div>
+                     <div class="col-4">
+                         <strong>Bewegungsfläche</strong>
+                         <br/>
+                         <br/>
+
+                         <table class="table">
+                             <tr>
+                                <td>Bewegungsfläche vor dem WC (Breite)</td>
+                                <td>
+                                    <nobr>{{ place['p:areaInFrontOfWCWidthCm'] }} cm</nobr>
+                                </td>
+                             </tr>
+                             <tr>
+                                <td>Bewegungsfläche vor dem WC (Tiefe)</td>
+                                <td>
+                                    <nobr>{{ place['p:areaInFrontOfWCDepthCm'] }} cm</nobr>
+                                </td>
+                             </tr>
+                             <tr>
+                                <td>Bewegungsfläche links von dem WC (Breite)</td>
+                                <td>
+                                    <nobr>{{ place['p:areaLeftOfWCWidthCm'] }} cm</nobr>
+                                </td>
+                             </tr>
+                             <tr>
+                                <td>Bewegungsfläche links von dem WC (Tiefe)</td>
+                                <td>
+                                    <nobr>{{ place['p:areaLeftOfWCDepthCm'] }} cm</nobr>
+                                </td>
+                             </tr>
+                             <tr>
+                                <td>Bewegungsfläche rechts von dem WC (Breite)</td>
+                                <td>
+                                    <nobr>{{ place['p:areaRightOfWCWidthCm'] }} cm</nobr>
+                                </td>
+                             </tr>
+                             <tr>
+                                <td>Bewegungsfläche rechts von dem WC (Tiefe)</td>
+                                <td>
+                                    <nobr>{{ place['p:areaRightOfWCDepthCm'] }} cm</nobr>
+                                </td>
+                             </tr>
+                         </table>
+                     </div>
+                 </div>
+             </div>
+
+        </div>
+
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+    </body>
+</html>

@@ -1,18 +1,13 @@
 <?php
 
-use \Psr\Http\Message\ServerRequestInterface as Request;
-use \Psr\Http\Message\ResponseInterface as Response;
 use \Symfony\Component\Yaml\Yaml;
 use \Twig\Environment;
 use \Twig\Loader\FilesystemLoader;
+use \Symfony\Component\HttpFoundation\Request;
 
 require '../vendor/autoload.php';
 
-$app = new \Slim\App([
-    'settings' => [
-        'displayErrorDetails' => true
-    ]
-]);
+$db = new BVL\ListOfPlaces\Database();
 
 // twig (template engine)
 $templatesFolder = __DIR__ .'/../templates';
@@ -22,41 +17,37 @@ $twig = new Environment(new FilesystemLoader($templatesFolder), []);
  * load config
  */
 $configFilepath = __DIR__ .'/../config.yml';
-if (false == file_exists($configFilepath)) {
+if (false == \file_exists($configFilepath)) {
     throw new \Exception('Konfigurationdatei nicht gefunden: '. $configFilepath);
 }
 $config = Yaml::parseFile($configFilepath);
 
 /*
- * database
+ * request
  */
-$db = new BVL\ListOfPlaces\Database();
+$request = Request::createFromGlobals();
 
 /*
- * list of places
+ * place list
  */
-$app->get('/', function (Request $request, Response $response, array $args) use ($twig, $config, $db) {
+if (false === \strpos($request->getRequestUri(), 'place/')) {
+    $places = $db->getPlaces($request->query->get('search'));
 
-});
-
-$app->map(['GET', 'POST'], '/places', function (Request $request, Response $response, array $args) use ($twig, $config, $db) {
-
-    $response->getBody()->write($twig->render('index.html.twig', [
+    echo $twig->render('index.html.twig', [
         'url' => $config['url'],
-        'places' => $db->getPlaces($request->getParam('search')),
-        'search' => $request->getParam('search')
-    ]));
-
-    return $response;
-});
+        'places' => $places,
+        'search' => $request->query->get('search'),
+    ]);
 
 /*
- * place details
+ * Details view
  */
-$app->get('/places/{id}', function (Request $request, Response $response, array $args) {
-    $response->getBody()->write("Hello");
+} else {
+    // extract ID of the place from URL
+    $id = substr($request->getRequestUri(), \strpos($request->getRequestUri(), 'place/')+6);
 
-    return $response;
-});
-
-$app->run();
+    echo $twig->render('place.html.twig', [
+        'url' => $config['url'],
+        'place' => $db->getPlaceByID($id),
+    ]);
+}
